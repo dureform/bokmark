@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-surface: #f6f6f4;
+  --color-surface-raised: #ffffff;
+  --color-ink: #1c1c1a;
+  --color-ink-muted: #6b6b66;
+  --color-ink-faint: #9a9a94;
+  --color-line: #e4e4df;
+  --color-accent: #3d5a4c;
+  --color-accent-hover: #324a3f;
+  --color-accent-soft: #e8efeB;
+  --color-danger: #c2473f;
+  --color-danger-hover: #a83b34;
+  --color-danger-soft: #f8e6e4;
+}
+
+.dark {
+  --color-surface: #141413;
+  --color-surface-raised: #1c1c1a;
+  --color-ink: #ececeb;
+  --color-ink-muted: #9a9a94;
+  --color-ink-faint: #6b6b66;
+  --color-line: #2e2e2b;
+  --color-accent: #8fb9a4;
+  --color-accent-hover: #a3c9b6;
+  --color-accent-soft: #24332c;
+  --color-danger: #e85d54;
+  --color-danger-hover: #f0756d;
+  --color-danger-soft: #3d2220;
+}
+
+html {
+  font-family: var(--font-sans);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+button {
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    opacity 150ms ease;
+}
+
+button:disabled {
+  transition: none;
+}
+
+dialog {
+  border: none;
+  padding: 0;
+  margin: 0;
+  max-width: none;
+  max-height: none;
+}
+
+dialog::backdrop {
+  background-color: #f6f6f4;
+}
+
+.dark dialog::backdrop {
+  background-color: #141413;
+}

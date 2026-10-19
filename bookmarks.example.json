@@ -1,0 +1,23 @@
+[
+  {
+    "url": "https://example.com",
+    "title": "Example title",
+    "tags": ["design", "tools"],
+    "date_added": "2026-10-19T06:43:51Z",
+    "description": "Optional longer description"
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API",
+    "title": "File System Access API",
+    "tags": ["tools", "web"],
+    "date_added": "2026-10-18T14:20:00Z",
+    "description": "Read and write local files from the browser with user permission."
+  },
+  {
+    "url": "https://tailwindcss.com",
+    "title": "Tailwind CSS",
+    "tags": ["design", "css"],
+    "date_added": "2026-10-17T09:12:33Z",
+    "description": ""
+  }
+]
