@@ -59,13 +59,20 @@ export async function openBookmarksFile(): Promise<OpenedBookmarks> {
 }
 
 async function openWithFilePicker(): Promise<OpenedBookmarks> {
+  // Include text/plain: on macOS, .json is often not application/json,
+  // which makes Chrome grey out the file when only that MIME is listed.
   const [handle] = await window.showOpenFilePicker({
     types: [
       {
-        description: 'JSON bookmarks',
-        accept: { 'application/json': ['.json'] },
+        description: 'JSON bookmark file',
+        accept: {
+          'application/json': ['.json'],
+          'text/json': ['.json'],
+          'text/plain': ['.json'],
+        },
       },
     ],
+    excludeAcceptAllOption: false,
     multiple: false,
   })
 
