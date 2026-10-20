@@ -2,6 +2,8 @@
 
 Static local bookmark manager for bookmark-files in .json format.
 
+**App:** https://dureform.github.io/bokmark/
+
 ```bash
 npm install
 npm run dev      # develop
