@@ -132,7 +132,7 @@ export default function App() {
             Local bookmarks
           </h1>
           <p className="mx-auto mt-3 max-w-md text-ink-muted">
-            Open a <code className="text-ink">bookmarks.json</code> file on your
+            Open a <code className="text-ink">bookmark.json</code> file on your
             machine. Edits write straight back — nothing leaves your computer.
           </p>
           {!canNativeWrite && (
@@ -162,7 +162,7 @@ export default function App() {
                 : 'rounded-2xl bg-accent px-6 py-3.5 text-base font-medium text-surface-raised hover:bg-accent-hover dark:text-surface'
             }
           >
-            {needsReconnect ? 'Choose a different file' : 'Open bookmarks.json'}
+            {needsReconnect ? 'Choose a different file' : 'Open bookmark.json'}
           </button>
         </div>
         {error && (
@@ -272,13 +272,37 @@ export default function App() {
             </p>
           )}
 
-          <div className="mb-6">
+          <div className="relative mb-6">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search title, URL, tags, description…"
-              className="w-full rounded-2xl border border-line bg-surface-raised px-4 py-3.5 outline-none focus:border-accent"
+              className="w-full rounded-2xl border border-line bg-surface-raised py-3.5 pr-12 pl-4 outline-none focus:border-accent"
             />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                title="Clear search"
+                aria-label="Clear search"
+                className="absolute top-1/2 right-3 -translate-y-1/2 rounded-lg p-1.5 text-ink-faint hover:bg-surface hover:text-ink"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            )}
           </div>
 
           <BookmarkList

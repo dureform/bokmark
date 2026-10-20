@@ -85,7 +85,7 @@ export function BookmarkForm({
             {initial ? 'Edit bookmark' : 'Add bookmark'}
           </h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Changes are written to bookmarks.json immediately.
+            Changes are written to your bookmark.json file immediately.
           </p>
         </div>
 

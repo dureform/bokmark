@@ -108,7 +108,7 @@ export function CategorySidebar({
 
   return (
     <aside className="flex max-h-56 w-full flex-col lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:w-80 lg:shrink-0">
-      <div className="mb-2 shrink-0 space-y-2 px-2">
+      <div className="mb-3 shrink-0 space-y-2 border-b border-line px-2 pb-3">
         <p className="text-xs tracking-[0.16em] text-ink-faint uppercase">
           Categories
         </p>
