@@ -5,6 +5,11 @@ import { CategorySidebar } from './components/CategorySidebar'
 import { DeleteCategoryDialog } from './components/DeleteCategoryDialog'
 import { useBookmarks } from './hooks/useBookmarks'
 import { useTheme } from './hooks/useTheme'
+import { downloadBookmarksJson } from './lib/file'
+import {
+  parseNetscapeBookmarks,
+  pickHtmlBookmarkFile,
+} from './lib/netscapeImport'
 import type { Bookmark } from './types'
 
 function ThemeIcon({ theme }: { theme: 'light' | 'dark' }) {
@@ -81,6 +86,32 @@ export default function App() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [deletingTag, setDeletingTag] = useState<string | null>(null)
+  const [convertBusy, setConvertBusy] = useState(false)
+  const [convertError, setConvertError] = useState<string | null>(null)
+  const [convertSummary, setConvertSummary] = useState<string | null>(null)
+
+  async function convertHtmlExport() {
+    setConvertError(null)
+    setConvertSummary(null)
+    setConvertBusy(true)
+    try {
+      const file = await pickHtmlBookmarkFile()
+      const html = await file.text()
+      const { bookmarks, categoryCount } = parseNetscapeBookmarks(html)
+      const dateStamp = new Date().toISOString().slice(0, 10)
+      downloadBookmarksJson(`bookmarks-${dateStamp}.json`, bookmarks)
+      setConvertSummary(
+        `Converted ${bookmarks.length} bookmark${bookmarks.length === 1 ? '' : 's'} across ${categoryCount} categor${categoryCount === 1 ? 'y' : 'ies'}. Open the downloaded JSON to continue.`,
+      )
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      setConvertError(
+        err instanceof Error ? err.message : 'Could not convert that file',
+      )
+    } finally {
+      setConvertBusy(false)
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -172,10 +203,27 @@ export default function App() {
           >
             {needsReconnect ? 'Choose a different file' : 'Open bookmark.json'}
           </button>
+          <button
+            type="button"
+            disabled={convertBusy}
+            onClick={() => void convertHtmlExport()}
+            className="rounded-2xl border border-line px-6 py-3.5 text-base text-ink-muted hover:border-ink-faint hover:bg-surface-raised hover:text-ink disabled:opacity-60"
+          >
+            {convertBusy ? 'Converting…' : 'Convert a bookmark.html file'}
+          </button>
+          <p className="max-w-sm text-xs text-ink-faint">
+            Select a bookmark.html file, convert it to .json here and then open
+            the downloaded .json.
+          </p>
         </div>
-        {error && (
+        {convertSummary && (
+          <p className="max-w-md text-sm text-accent" role="status">
+            {convertSummary}
+          </p>
+        )}
+        {(error || convertError) && (
           <p className="max-w-md text-sm text-danger" role="alert">
-            {error}
+            {convertError ?? error}
           </p>
         )}
         <button

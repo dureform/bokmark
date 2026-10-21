@@ -11,3 +11,5 @@ npm run build    # → dist/index.html (single file; open/bookmark in Chrome)
 ```
 
 Chrome/Edge: in-place save via File System Access API. Other browsers / `file://`: downloads on save.
+
+Import: convert a Chrome/Safari `bookmarks.html` export to JSON on the start screen, then open the downloaded file.
