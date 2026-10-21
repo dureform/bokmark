@@ -140,7 +140,8 @@ export default function App() {
           </h1>
           <p className="mx-auto mt-3 max-w-md text-ink-muted">
             Open a <code className="text-ink">bookmark.json</code> file on your
-            machine. Edits write straight back — nothing leaves your computer.
+            device. Changes are saved directly to the file. Your data never
+            leaves your device.
           </p>
           {!canNativeWrite && (
             <p className="mx-auto mt-4 max-w-md rounded-xl bg-accent-soft px-4 py-3 text-sm text-accent">
