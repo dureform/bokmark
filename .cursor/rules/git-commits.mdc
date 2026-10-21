@@ -1,0 +1,11 @@
+---
+description: Git commit author rules for dureform/bokmark
+alwaysApply: true
+---
+
+# Git commits
+
+- Author and committer must always be `dureform <181001745+dureform@users.noreply.github.com>`.
+- Never include `Co-authored-by: Cursor` / `cursoragent@cursor.com` (or any Cursor co-author trailer).
+- Prefer `git commit-tree` (or equivalent) so Cursor cannot inject co-author trailers.
+- Do not use `git commit` in a way that adds Cursor as a contributor on GitHub.

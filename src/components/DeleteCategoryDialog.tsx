@@ -9,6 +9,8 @@ interface DeleteCategoryDialogProps {
   open: boolean
   tag: string | null
   count: number
+  /** Bookmarks that only have this category (would become uncategorized if stripped). */
+  soleTagCount: number
   otherTags: string[]
   onClose: () => void
   onConfirm: (result: DeleteCategoryResult) => Promise<void>
@@ -18,6 +20,7 @@ export function DeleteCategoryDialog({
   open,
   tag,
   count,
+  soleTagCount,
   otherTags,
   onClose,
   onConfirm,
@@ -28,35 +31,52 @@ export function DeleteCategoryDialog({
   )
   const [moveTo, setMoveTo] = useState('')
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const canStrip = soleTagCount === 0
+  const canMove = otherTags.length > 0
 
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
     if (open && !dialog.open) {
-      setAction(otherTags.length > 0 ? 'move' : 'remove')
+      const initial: 'remove' | 'move' | 'deleteBookmarks' = canMove
+        ? 'move'
+        : canStrip
+          ? 'remove'
+          : 'deleteBookmarks'
+      setAction(initial)
       setMoveTo(otherTags[0] ?? '')
       setBusy(false)
+      setError(null)
       dialog.showModal()
     } else if (!open && dialog.open) {
       dialog.close()
     }
-  }, [open, otherTags])
+  }, [open, otherTags, canStrip, canMove])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!tag) return
-    if (action === 'move' && !moveTo) return
+
+    const destination = moveTo.trim().toLowerCase()
+    if (action === 'move' && !destination) {
+      setError('Choose a category to move bookmarks to.')
+      return
+    }
 
     setBusy(true)
+    setError(null)
     try {
       if (action === 'move') {
-        await onConfirm({ action: 'move', moveTo })
+        await onConfirm({ action: 'move', moveTo: destination })
       } else if (action === 'deleteBookmarks') {
         await onConfirm({ action: 'deleteBookmarks' })
       } else {
         await onConfirm({ action: 'remove' })
       }
       onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete category')
     } finally {
       setBusy(false)
     }
@@ -89,61 +109,85 @@ export function DeleteCategoryDialog({
 
         {count > 0 && (
           <fieldset className="flex flex-col gap-3">
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line px-3.5 py-3 has-checked:border-accent">
+            <label
+              className={`flex items-start gap-3 rounded-xl border border-line px-3.5 py-3 has-checked:border-accent ${
+                canStrip
+                  ? 'cursor-pointer'
+                  : 'cursor-not-allowed opacity-50'
+              }`}
+            >
               <input
                 type="radio"
                 name="delete-action"
                 checked={action === 'remove'}
+                disabled={!canStrip}
                 onChange={() => setAction('remove')}
                 className="mt-1"
               />
               <span>
                 <span className="block font-medium">Just remove the category</span>
                 <span className="text-sm text-ink-muted">
-                  Bookmarks stay; the category is stripped off.
+                  {canStrip
+                    ? 'Bookmarks stay; the category is stripped off.'
+                    : `${soleTagCount} bookmark${soleTagCount === 1 ? '' : 's'} only ${soleTagCount === 1 ? 'has' : 'have'} this category — move or delete ${soleTagCount === 1 ? 'it' : 'them'} instead.`}
                 </span>
               </span>
             </label>
 
-            <label
-              className={`flex items-start gap-3 rounded-xl border border-line px-3.5 py-3 has-checked:border-accent ${
-                otherTags.length === 0
-                  ? 'cursor-not-allowed opacity-50'
-                  : 'cursor-pointer'
-              }`}
+            <div
+              className={`rounded-xl border border-line px-3.5 py-3 ${
+                action === 'move' ? 'border-accent' : ''
+              } ${canMove ? '' : 'opacity-50'}`}
             >
-              <input
-                type="radio"
-                name="delete-action"
-                checked={action === 'move'}
-                disabled={otherTags.length === 0}
-                onChange={() => setAction('move')}
-                className="mt-1"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block font-medium">
-                  Move bookmarks to another category
+              <label
+                className={`flex items-start gap-3 ${
+                  canMove ? 'cursor-pointer' : 'cursor-not-allowed'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="delete-action"
+                  checked={action === 'move'}
+                  disabled={!canMove}
+                  onChange={() => setAction('move')}
+                  className="mt-1"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">
+                    Move bookmarks to another category
+                  </span>
+                  <span className="mt-1 block text-sm text-ink-muted">
+                    {canMove
+                      ? 'Replaces this category on those bookmarks.'
+                      : 'No other categories available.'}
+                  </span>
                 </span>
-                <span className="mt-2 block">
-                  <select
-                    value={moveTo}
-                    disabled={otherTags.length === 0 || action !== 'move'}
-                    onChange={(e) => setMoveTo(e.target.value)}
-                    className="w-full rounded-lg border border-line bg-surface px-2.5 py-2 outline-none focus:border-accent"
-                  >
-                    {otherTags.length === 0 ? (
-                      <option value="">No other categories</option>
-                    ) : (
-                      otherTags.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </span>
-              </span>
-            </label>
+              </label>
+              <div className="mt-2 pl-7">
+                <select
+                  value={moveTo}
+                  disabled={!canMove}
+                  onChange={(e) => {
+                    setMoveTo(e.target.value)
+                    setAction('move')
+                  }}
+                  onFocus={() => {
+                    if (canMove) setAction('move')
+                  }}
+                  className="w-full rounded-lg border border-line bg-surface px-2.5 py-2 outline-none focus:border-accent disabled:opacity-60"
+                >
+                  {canMove ? (
+                    otherTags.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">No other categories</option>
+                  )}
+                </select>
+              </div>
+            </div>
 
             <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line px-3.5 py-3 has-checked:border-accent">
               <input
@@ -166,6 +210,12 @@ export function DeleteCategoryDialog({
           </fieldset>
         )}
 
+        {error && (
+          <p className="text-sm text-danger" role="alert">
+            {error}
+          </p>
+        )}
+
         <div className="flex items-center justify-end gap-3">
           <button
             type="button"
@@ -176,7 +226,7 @@ export function DeleteCategoryDialog({
           </button>
           <button
             type="submit"
-            disabled={busy || (action === 'move' && !moveTo)}
+            disabled={busy || (action === 'move' && !moveTo.trim())}
             className="rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-white hover:bg-danger-hover disabled:opacity-60"
           >
             {busy

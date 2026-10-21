@@ -156,6 +156,9 @@ export function useBookmarks() {
   const addBookmark = useCallback(
     async (draft: BookmarkDraft) => {
       const tags = normalizeTags(draft.tags)
+      if (tags.length === 0) {
+        throw new Error('At least one category is required.')
+      }
       const bookmark: Bookmark = {
         url: draft.url.trim(),
         title: draft.title.trim(),
@@ -173,6 +176,9 @@ export function useBookmarks() {
     async (index: number, draft: BookmarkDraft) => {
       const previous = bookmarks[index]
       const tags = normalizeTags(draft.tags)
+      if (tags.length === 0) {
+        throw new Error('At least one category is required.')
+      }
       const next = bookmarks.map((b, i) =>
         i === index
           ? {
@@ -230,14 +236,35 @@ export function useBookmarks() {
       const deleteBookmarks = options.deleteBookmarks === true
       const target = options.moveTo?.trim().toLowerCase() || null
 
-      const next = deleteBookmarks
-        ? bookmarks.filter((b) => !b.tags.includes(tag))
-        : bookmarks.map((b) => {
-            if (!b.tags.includes(tag)) return b
-            const without = b.tags.filter((t) => t !== tag)
-            if (target) without.push(target)
-            return { ...b, tags: normalizeTags(without) }
-          })
+      if (target && target === tag) {
+        throw new Error('Choose a different category to move to.')
+      }
+
+      let next: Bookmark[]
+      if (deleteBookmarks) {
+        next = bookmarks.filter((b) => !b.tags.includes(tag))
+      } else if (target) {
+        next = bookmarks.map((b) => {
+          if (!b.tags.includes(tag)) return b
+          return {
+            ...b,
+            tags: normalizeTags([
+              ...b.tags.filter((t) => t !== tag),
+              target,
+            ]),
+          }
+        })
+      } else {
+        next = bookmarks.map((b) => {
+          if (!b.tags.includes(tag)) return b
+          return { ...b, tags: b.tags.filter((t) => t !== tag) }
+        })
+        if (next.some((b) => b.tags.length === 0)) {
+          throw new Error(
+            'Every bookmark needs a category. Move or delete those bookmarks instead.',
+          )
+        }
+      }
 
       setTagTouched((prev) => {
         const nextTouched = { ...prev }

@@ -41,8 +41,16 @@ export function BookmarkForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const parsedTags = tags
+      .split(/[,]+/)
+      .map((t) => t.trim())
+      .filter(Boolean)
     if (!title.trim() || !url.trim()) {
       setError('Title and URL are required.')
+      return
+    }
+    if (parsedTags.length === 0) {
+      setError('At least one category is required.')
       return
     }
     setBusy(true)
@@ -51,10 +59,7 @@ export function BookmarkForm({
       await onSubmit({
         title,
         url,
-        tags: tags
-          .split(/[,]+/)
-          .map((t) => t.trim())
-          .filter(Boolean),
+        tags: parsedTags,
         description,
         date_added: initial?.date_added,
       })
@@ -112,13 +117,17 @@ export function BookmarkForm({
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm text-ink-muted">Tags</span>
+          <span className="text-sm text-ink-muted">Category</span>
           <input
             value={tags}
             onChange={(e) => setTags(e.target.value)}
+            required
             className="rounded-xl border border-line bg-surface px-3.5 py-2.5 outline-none focus:border-accent"
             placeholder="design, tools"
           />
+          <span className="text-xs text-ink-faint">
+            At least one category is required.
+          </span>
         </label>
 
         <label className="flex flex-col gap-1.5">

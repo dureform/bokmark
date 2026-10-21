@@ -128,11 +128,7 @@ export function BookmarkList({
                   type="button"
                   title="Delete"
                   aria-label={`Delete ${bookmark.title || bookmark.url}`}
-                  onClick={() => {
-                    if (confirm(`Delete “${bookmark.title || bookmark.url}”?`)) {
-                      onDelete(index)
-                    }
-                  }}
+                  onClick={() => onDelete(index)}
                   className="rounded-lg p-1.5 text-ink-muted hover:bg-danger-soft hover:text-danger"
                 >
                   <TrashIcon />

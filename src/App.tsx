@@ -109,6 +109,13 @@ export default function App() {
       ? 0
       : (tagCounts.find(([tag]) => tag === deletingTag)?.[1] ?? 0)
 
+  const soleTagCount =
+    deletingTag === null
+      ? 0
+      : bookmarks.filter(
+          (b) => b.tags.length === 1 && b.tags[0] === deletingTag,
+        ).length
+
   const otherTags = tagCounts
     .map(([tag]) => tag)
     .filter((tag) => tag !== deletingTag)
@@ -126,10 +133,10 @@ export default function App() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-6 text-center">
         <div>
           <p className="text-sm tracking-[0.2em] text-ink-faint uppercase">
-            bokmark
+            Local bookmarks
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-            Local bookmarks
+            Bokmark
           </h1>
           <p className="mx-auto mt-3 max-w-md text-ink-muted">
             Open a <code className="text-ink">bookmark.json</code> file on your
@@ -337,6 +344,7 @@ export default function App() {
         open={deletingTag !== null}
         tag={deletingTag}
         count={deletingCount}
+        soleTagCount={soleTagCount}
         otherTags={otherTags}
         onClose={() => setDeletingTag(null)}
         onConfirm={async (result) => {
