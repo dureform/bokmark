@@ -170,8 +170,7 @@ export default function App() {
             Bokmark
           </h1>
           <p className="mx-auto mt-3 max-w-md text-ink-muted">
-            Open a <code className="text-ink">bookmark.json</code> file on your
-            device. Changes are saved directly to the file. Your data never
+            Open a <code className="text-ink">bookmark.json</code> file. Changes are saved directly to the file. Your data never
             leaves your device.
           </p>
           {!canNativeWrite && (
@@ -212,8 +211,8 @@ export default function App() {
             {convertBusy ? 'Converting…' : 'Convert a bookmark.html file'}
           </button>
           <p className="max-w-sm text-xs text-ink-faint">
-            Select a bookmark.html file, convert it to .json here and then open
-            the downloaded .json.
+            Select a bookmark.html file, convert it to .json here and open
+            the downloaded .json file.
           </p>
         </div>
         {convertSummary && (
@@ -376,6 +375,7 @@ export default function App() {
       <BookmarkForm
         open={formOpen}
         initial={editing}
+        categories={tagStats.map((t) => t.tag)}
         onClose={() => {
           setFormOpen(false)
           setEditingIndex(null)

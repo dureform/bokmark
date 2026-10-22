@@ -1,27 +1,47 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { Bookmark, BookmarkDraft } from '../types'
 
 interface BookmarkFormProps {
   open: boolean
   initial?: Bookmark | null
+  categories: string[]
   onClose: () => void
   onSubmit: (draft: BookmarkDraft) => Promise<void>
+}
+
+function parseTagParts(value: string): { completed: string[]; draft: string } {
+  const parts = value.split(',')
+  const draft = parts[parts.length - 1] ?? ''
+  const completed = parts
+    .slice(0, -1)
+    .map((t) => t.trim())
+    .filter(Boolean)
+  return { completed, draft }
+}
+
+function applySuggestion(value: string, suggestion: string): string {
+  const { completed } = parseTagParts(value)
+  return [...completed, suggestion].join(', ') + ', '
 }
 
 export function BookmarkForm({
   open,
   initial,
+  categories,
   onClose,
   onSubmit,
 }: BookmarkFormProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
+  const listboxId = useId()
   const [title, setTitle] = useState('')
   const [url, setUrl] = useState('')
   const [tags, setTags] = useState('')
   const [description, setDescription] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [suggestOpen, setSuggestOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -33,11 +53,44 @@ export function BookmarkForm({
       setDescription(initial?.description ?? '')
       setError(null)
       setBusy(false)
+      setSuggestOpen(false)
+      setActiveIndex(0)
       dialog.showModal()
     } else if (!open && dialog.open) {
       dialog.close()
     }
   }, [open, initial])
+
+  const suggestions = useMemo(() => {
+    const { completed, draft } = parseTagParts(tags)
+    const query = draft.trim().toLowerCase()
+    if (!query) return []
+
+    const taken = new Set(completed.map((t) => t.toLowerCase()))
+    return categories
+      .filter((tag) => {
+        const lower = tag.toLowerCase()
+        if (taken.has(lower)) return false
+        return lower.startsWith(query) || lower.includes(query)
+      })
+      .sort((a, b) => {
+        const aStarts = a.toLowerCase().startsWith(query) ? 0 : 1
+        const bStarts = b.toLowerCase().startsWith(query) ? 0 : 1
+        if (aStarts !== bStarts) return aStarts - bStarts
+        return a.localeCompare(b)
+      })
+      .slice(0, 8)
+  }, [tags, categories])
+
+  useEffect(() => {
+    setActiveIndex(0)
+  }, [suggestions])
+
+  function chooseSuggestion(suggestion: string) {
+    setTags(applySuggestion(tags, suggestion))
+    setSuggestOpen(false)
+    setActiveIndex(0)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -70,6 +123,8 @@ export function BookmarkForm({
       setBusy(false)
     }
   }
+
+  const showSuggestions = suggestOpen && suggestions.length > 0
 
   return (
     <dialog
@@ -116,19 +171,75 @@ export function BookmarkForm({
           />
         </label>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm text-ink-muted">Category</span>
-          <input
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            required
-            className="rounded-xl border border-line bg-surface px-3.5 py-2.5 outline-none focus:border-accent"
-            placeholder="design, tools"
-          />
+        <div className="relative flex flex-col gap-1.5">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm text-ink-muted">Category</span>
+            <input
+              value={tags}
+              onChange={(e) => {
+                setTags(e.target.value)
+                setSuggestOpen(true)
+              }}
+              onFocus={() => setSuggestOpen(true)}
+              onBlur={() => {
+                // Delay so suggestion click can register
+                window.setTimeout(() => setSuggestOpen(false), 120)
+              }}
+              onKeyDown={(e) => {
+                if (!showSuggestions) return
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault()
+                  setActiveIndex((i) =>
+                    Math.min(i + 1, suggestions.length - 1),
+                  )
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  setActiveIndex((i) => Math.max(i - 1, 0))
+                } else if (e.key === 'Enter' && suggestions[activeIndex]) {
+                  e.preventDefault()
+                  chooseSuggestion(suggestions[activeIndex])
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setSuggestOpen(false)
+                }
+              }}
+              required
+              role="combobox"
+              aria-expanded={showSuggestions}
+              aria-controls={listboxId}
+              aria-autocomplete="list"
+              className="rounded-xl border border-line bg-surface px-3.5 py-2.5 outline-none focus:border-accent"
+              placeholder="design, tools"
+            />
+          </label>
+          {showSuggestions && (
+            <ul
+              id={listboxId}
+              role="listbox"
+              className="absolute top-full right-0 left-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-xl border border-line bg-surface-raised py-1 shadow-lg"
+            >
+              {suggestions.map((suggestion, index) => (
+                <li key={suggestion} role="option" aria-selected={index === activeIndex}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => chooseSuggestion(suggestion)}
+                    className={`w-full px-3.5 py-2 text-left text-sm ${
+                      index === activeIndex
+                        ? 'bg-accent-soft text-accent'
+                        : 'text-ink hover:bg-surface'
+                    }`}
+                  >
+                    {suggestion}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <span className="text-xs text-ink-faint">
-            At least one category is required.
+            At least one category is required. Suggestions appear as you type.
           </span>
-        </label>
+        </div>
 
         <label className="flex flex-col gap-1.5">
           <span className="text-sm text-ink-muted">Description</span>

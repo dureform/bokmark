@@ -159,8 +159,12 @@ export function useBookmarks() {
       if (tags.length === 0) {
         throw new Error('At least one category is required.')
       }
+      const url = draft.url.trim()
+      if (bookmarks.some((b) => urlsMatch(b.url, url))) {
+        throw new Error('A bookmark with this URL already exists.')
+      }
       const bookmark: Bookmark = {
-        url: draft.url.trim(),
+        url,
         title: draft.title.trim(),
         tags,
         date_added: nowIso(),
@@ -179,11 +183,17 @@ export function useBookmarks() {
       if (tags.length === 0) {
         throw new Error('At least one category is required.')
       }
+      const url = draft.url.trim()
+      if (
+        bookmarks.some((b, i) => i !== index && urlsMatch(b.url, url))
+      ) {
+        throw new Error('A bookmark with this URL already exists.')
+      }
       const next = bookmarks.map((b, i) =>
         i === index
           ? {
               ...b,
-              url: draft.url.trim(),
+              url,
               title: draft.title.trim(),
               tags,
               description: draft.description.trim(),
@@ -342,4 +352,12 @@ function normalizeTags(tags: string[]): string[] {
     result.push(tag)
   }
   return result
+}
+
+function normalizeUrl(url: string): string {
+  return url.trim().replace(/\/+$/, '').toLowerCase()
+}
+
+function urlsMatch(a: string, b: string): boolean {
+  return normalizeUrl(a) === normalizeUrl(b)
 }
